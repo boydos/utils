@@ -257,6 +257,31 @@ public class FileUtils extends BaseCloseUtils {
         return save;
 	}
 	/**
+	 * Use OutputStreamWriter to save UTF-8 
+	 * @param path
+	 * @param content
+	 * @return if success return true else return false
+	 */
+	public static boolean fileWriteUtf8(String path,String content) {
+		boolean save =false;
+		File file = new File(path);
+		keepFileExists(file, false);
+		FileOutputStream fos=null;
+		OutputStreamWriter osw=null;
+		try {
+		   fos = new FileOutputStream(path);   
+	       osw = new OutputStreamWriter(fos, "UTF-8");   
+	       osw.write(content);   
+	       osw.flush(); 
+	       save=true;
+		}catch (IOException e) {
+			e.printStackTrace();
+		} finally  {
+	        closeResources(fos,osw);
+	    }
+		return save;
+	}
+	/**
 	 * Use fileAppend to save 
 	 * @param path
 	 * @param content
@@ -323,10 +348,22 @@ public class FileUtils extends BaseCloseUtils {
 		}
 		
 		OutputStream out =getOutputStream(dir+"/"+filename);
-		if(inputStreamToOutStream(in, out)) {
+		boolean ret = inputStreamToOutStream(in, out);
+		closeResources(in,out);
+		if(ret) {
 			return filename;
 		}
 		return "";
 		
+	}
+	
+	public static int getFileCount(File file) {
+		int count=0;
+		if(file==null||!file.exists()) return count;
+		if(file.isFile()) return ++count;
+		for(File f :file.listFiles()) {
+			count+=getFileCount(f);
+		}
+		return count;
 	}
 }

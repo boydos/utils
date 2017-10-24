@@ -20,4 +20,7 @@ public class BaseCloseUtils {
 			e.printStackTrace();
 		}
 	}
+	public static void catchError(Exception e) {
+		Log.e(String.format("cause=%s msg=%s local=%s", e.getCause(),e.getMessage(),e.getLocalizedMessage()));
+	}
 }

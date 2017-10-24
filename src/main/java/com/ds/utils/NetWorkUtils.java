@@ -7,13 +7,21 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
 import java.net.URL;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
 
 import org.apache.http.Header;
 import org.apache.http.HeaderElement;
@@ -79,7 +87,7 @@ public class NetWorkUtils extends BaseCloseUtils {
 			result = FileUtils.getReader(in);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			catchError(e);
 		}finally{
 	           closeResources(in);
 	    }
@@ -168,7 +176,7 @@ public class NetWorkUtils extends BaseCloseUtils {
            in = new BufferedReader(new InputStreamReader(conn.getInputStream(), charset));
            result = FileUtils.getReader(in);
         } catch (Exception e) {            
-            e.printStackTrace();
+			catchError(e);
         } finally {
            closeResources(out,in);
         }
@@ -275,13 +283,13 @@ public class NetWorkUtils extends BaseCloseUtils {
 			}
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			catchError(e);
 		} catch (ClientProtocolException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			catchError(e);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			catchError(e);
 		}  finally {
 			closeResources(response,httpclient);
 		}
@@ -329,10 +337,10 @@ public class NetWorkUtils extends BaseCloseUtils {
 			return formatString(result,charset);
 		} catch (ClientProtocolException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			catchError(e);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			catchError(e);
 		}  finally {
 			closeResources(response,httpclient);
 		}
@@ -361,10 +369,10 @@ public class NetWorkUtils extends BaseCloseUtils {
 			return entity!=null? EntityUtils.toString(entity,charset):"";
 		} catch (org.apache.http.ParseException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			catchError(e);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			catchError(e);
 		}
 		return "";
 	}
@@ -429,15 +437,36 @@ public class NetWorkUtils extends BaseCloseUtils {
     * @return
     */
    public static InputStream getInputStream(String url) {
+	   if(url!=null) {
+		   url =url.trim();
+	   } else return null;
 		try {
 			URL realUrl = new URL(url);
+			if(url.startsWith("https://")) {
+				HttpsURLConnection conn =(HttpsURLConnection) realUrl.openConnection();
+				conn.setHostnameVerifier(new HostnameVerifier() {
+					
+					public boolean verify(String hostname, SSLSession session) {
+						// TODO Auto-generated method stub
+						return true;
+					}
+				});
+				conn.setSSLSocketFactory(getSSL());
+				conn.setConnectTimeout(DEFAULT_TIMEOUT);
+				conn.setRequestMethod("GET");
+				return conn.getInputStream();
+			}
 			HttpURLConnection conn =(HttpURLConnection) realUrl.openConnection();
 			conn.setConnectTimeout(DEFAULT_TIMEOUT);
 			conn.setRequestMethod("GET");
+			conn.setDoOutput(true);
+		    conn.setDoInput(true);
 			return conn.getInputStream();
 		 }  catch (IOException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			 catchError(e);
+			 //e.printStackTrace();
+			 System.out.println("url:"+url);
 		}
 	    return null;
    }
@@ -464,8 +493,27 @@ public class NetWorkUtils extends BaseCloseUtils {
 			return conn.getInputStream();
 		 }  catch (IOException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			catchError(e);
 		}
 	    return null;
+   }
+   
+   public static SSLSocketFactory getSSL() {
+	   TrustManager[] tm = { new MyX509TrustManager() };    
+       try {
+           SSLContext sslContext = SSLContext.getInstance("SSL", "SunJSSE");    
+           sslContext.init(null, tm, new java.security.SecureRandom());
+		   SSLSocketFactory ssf = sslContext.getSocketFactory();  
+		  return ssf;
+       } catch (KeyManagementException e) {
+		// TODO Auto-generated catch block
+		return null;
+	   } catch (NoSuchAlgorithmException e) {
+		// TODO Auto-generated catch block
+	   } catch (NoSuchProviderException e) {
+		// TODO Auto-generated catch block
+	   } 
+       return null;
+        
    }
 }

@@ -31,6 +31,14 @@ public class JsoupUtils {
 		}
 		return null;
 	}
+	
+	public static Element paraseHtml(String html) {
+		Document doc= Jsoup.parse(html);
+		if(doc!=null) {
+			return doc;
+		}
+		return null;
+	}
 	/**
 	 * get images url from element
 	 * @param element

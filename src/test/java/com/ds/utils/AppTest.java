@@ -35,4 +35,8 @@ public class AppTest
     {
         assertTrue( true );
     }
+    
+    public void testPassword() {
+    	System.out.println(StringUtils.EncoderByMd5("admin_dg_2017"));
+    }
 }

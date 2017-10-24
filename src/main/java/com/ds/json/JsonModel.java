@@ -291,7 +291,10 @@ public class JsonModel implements java.io.Serializable{
 	public JsonModel getModel(String name){
 		Object value = getMapValue(name);
 		if(value == null)return null;
-		return (JsonModel)value;
+		if(value instanceof JsonModel) {
+			return (JsonModel)value;
+		}
+		return null;
 	}
 	@SuppressWarnings("unchecked")
 	public List<JsonModel> getList(String name){
