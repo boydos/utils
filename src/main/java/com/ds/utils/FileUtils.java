@@ -343,7 +343,10 @@ public class FileUtils extends BaseCloseUtils {
 		if(index >0) {
 			String ext = url.substring(index, url.length());
 			if(!StringUtils.isEmpty(ext)&& index>url.lastIndexOf("/")) {
-				filename+=ext;
+				if(".jpg".equalsIgnoreCase(ext)||".jpeg".equalsIgnoreCase(ext)||".gif".equalsIgnoreCase(ext)
+						||".png".equalsIgnoreCase(ext)||".bmp".equalsIgnoreCase(ext)) {
+					filename+=ext;
+				}
 			}
 		}
 		
@@ -365,5 +368,59 @@ public class FileUtils extends BaseCloseUtils {
 			count+=getFileCount(f);
 		}
 		return count;
+	}
+	public static void copyFile(File fromFile,File toFile) {
+		if(fromFile==null||toFile==null) {
+			return;
+		}
+		if(fromFile.isDirectory() && toFile.isDirectory()) {
+			copyDirectory(fromFile, toFile);
+		} else if(fromFile.isDirectory() && toFile.isFile()) {
+			copyDirectory(fromFile, toFile.getParentFile());
+		} else if(fromFile.isFile()) {
+			copyFile2(fromFile, toFile);
+		}
+	}
+	private static void copyDirectory(File fromFile,File toFile) {
+		if(fromFile==null||toFile==null||!fromFile.exists()||fromFile.isFile()||toFile.isFile()) {
+			return;
+		}
+		for(File f:fromFile.listFiles()) {
+			if(f.isFile()) {
+				copyFile2(f,toFile);
+			} else if(f.isDirectory()) {
+				copyDirectory(f,new File(toFile.getAbsolutePath()+File.separator+f.getName()));
+			}
+		}
+	}
+	private static void copyFile2(File fromFile,File toFile) {
+		if(fromFile==null||toFile==null||!fromFile.exists()||fromFile.isDirectory()) {
+			return;
+		}
+		if(toFile.isDirectory()) {
+			copyFile2File(fromFile, new File(toFile.getAbsolutePath()+File.separator+fromFile.getName()));
+		} else if(toFile.isFile()){
+			copyFile2File(fromFile,toFile);
+		}
+	}
+	private static void copyFile2File(File fromFile,File toFile) {
+		if(fromFile==null||toFile==null||!fromFile.exists()
+				||fromFile.isDirectory()||fromFile.isDirectory()) {
+			return;
+		}
+		if(!toFile.getParentFile().exists()) {
+			toFile.getParentFile().mkdirs();
+		}
+        FileInputStream ins=null;
+        FileOutputStream out=null;
+		try {
+	        ins = new FileInputStream(fromFile);
+	        out = new FileOutputStream(toFile);
+	        inputStreamToOutStream(ins, out);
+		} catch(IOException e) {
+			
+		}finally {
+			closeResources(ins,out);
+		}
 	}
 }
